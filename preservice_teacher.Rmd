@@ -1,0 +1,255 @@
+---
+---
+```{r packages}
+
+library(openxlsx)
+library(dplyr)
+library(lavaan)
+library(psych)
+library(tidyr)
+library(car)
+library(rstatix)
+library(ggplot2)
+library(gridExtra)
+
+```
+
+```{r professional identity}
+
+identity_data <- read.xlsx('preservice_teacher.xlsx')
+
+model <- '
+  CV =~ CV1 + CV2 + CV3 + CV4 + CV5 + CV6
+  BT =~ BT1 + BT2 + BT3 + BT4 + BT5
+  JC =~ JC1 + JC2 + JC3 + JC4
+  JB =~ JB1 + JB2 + JB3'
+
+fit <- cfa(model, data = identity_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+identity_data$CV <- factor_scores[,1]
+identity_data$BT <- factor_scores[,2]
+identity_data$JC <- factor_scores[,3]
+identity_data$JB <- factor_scores[,4]
+
+alpha(identity_data[,c("CV1","CV2","CV3","CV4","CV5","CV6")])
+alpha(identity_data[,c("BT1","BT2","BT3","BT4","BT5")])
+alpha(identity_data[,c("JC1","JC2","JC3","JC4")])
+alpha(identity_data[,c("JB1","JB2","JB3")])
+alpha(identity_data[,c("CV1","CV2","CV3","CV4","CV5","CV6","BT1","BT2","BT3","BT4","BT5","JC1","JC2","JC3","JC4","JB1","JB2","JB3")])
+
+#write.xlsx(identity_data,file='identity_result.xlsx')
+```
+
+```{r self-efficacy}
+
+efficacy_data <- read.xlsx('preservice_teacher.xlsx')
+
+model <- '
+  CR =~ CR1 + CR2 + CR3 + CR4
+  ST =~ ST1 + ST2 + ST3 + ST4 + ST5 + ST6 + ST7 + ST8
+  ST5 ~~ ST8'
+fit <- cfa(model, data = efficacy_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+mi <- modificationIndices(fit)
+mi[mi$mi > 20,]
+
+factor_scores <- predict(fit)
+efficacy_data$CR <- factor_scores[,1]
+efficacy_data$ST <- factor_scores[,2]
+
+alpha(efficacy_data[,c("CR1","CR2","CR3","CR4")])
+alpha(efficacy_data[,c("ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8")])
+alpha(efficacy_data[,c("CR1","CR2","CR3","CR4","ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8")])
+
+#write.xlsx(efficacy_data,file='efficacy_result.xlsx')
+```
+
+```{r big5}
+
+Bigfive_data <- read.xlsx('preservice_teacher.xlsx')
+
+reverse_items <- c("E2","E3")
+Bigfive_data[,reverse_items] <- 7-Bigfive_data[,reverse_items]
+
+model <- '
+  O =~ O1 + O2 + O3
+  C =~ C1 + C2 + C3
+  E =~ E1 + E2 + E3
+  A =~ A1 + A2 + A3
+  N =~ N1 + N2 + N3'
+fit <- cfa(model, data = Bigfive_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+Bigfive_data$O <- factor_scores[,1]
+Bigfive_data$C <- factor_scores[,2]
+Bigfive_data$E <- factor_scores[,3]
+Bigfive_data$A <- factor_scores[,4]
+Bigfive_data$N <- factor_scores[,5]
+
+alpha(Bigfive_data[,c("O1","O2","O3")])
+alpha(Bigfive_data[,c("C1","C2","C3")])
+alpha(Bigfive_data[,c("E1","E2","E3")])
+alpha(Bigfive_data[,c("A1","A2","A3")])
+alpha(Bigfive_data[,c("N1","N2","N3")])
+
+#write.xlsx(Bigfive_data,file='Big5data_result.xlsx')
+```
+
+```{r problem solvign}
+
+Problem_data <- read.xlsx('preservice_teacher.xlsx')
+
+reverse_items <- c("AA4","AA5","AA6","AA9","AA11","AA12","AA14","AA16",
+                   "PS3","PS10")
+Problem_data[,reverse_items] <- 7- Problem_data[,reverse_items]
+
+model <- '
+  PS =~ PS1 + PS2 + PS4 + PS6 + PS7 + PS8 + PS9 + PS10
+  AA =~ AA6 + AA11 + AA12 + AA14 + AA16
+  SC =~ SC3 + SC4 + SC5
+  AA	=~	PS11'
+
+fit <- cfa(model, data = Problem_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+mi <- modificationIndices(fit)
+mi[mi$mi > 30,]
+
+factor_scores <- predict(fit)
+Problem_data$AA <- factor_scores[,1]
+Problem_data$PS <- factor_scores[,2]
+Problem_data$SC <- factor_scores[,3]
+
+alpha(Problem_data[,c("AA6","AA11","AA12","AA14","AA16")])
+alpha(Problem_data[,c("PS1","PS2","PS4","PS6","PS7","PS8","PS9","PS10")])
+alpha(Problem_data[,c("SC3","SC4","SC5")])
+
+reverse_items <- c("AA6","AA11","AA12","AA14","AA16")
+Problem_data[, reverse_items] <- 7 - Problem_data[, reverse_items]
+alpha(Problem_data[,c("AA6","AA11","AA12","AA14","AA16","PS1","PS2","PS4","PS6","PS7","PS8","PS9","PS10","SC3","SC4","SC5")])
+
+#write.xlsx(Problem_data,file='Problem_result.xlsx')
+
+```
+
+```{r belief}
+
+believe_data <- read.xlsx('preservice_teacher.xlsx')
+
+model <- '
+  CT =~ CT1 + CT3 + CT4 + CT5 + CT6 + CT8 + CT9  
+  TT =~ TT3 + TT5 +TT7
+'
+fit <- cfa (model,data = believe_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+mi <- modificationIndices(fit)
+mi[mi$mi > 20,]
+
+factor_scores <- predict(fit)
+believe_data$CT <- factor_scores[,1]
+believe_data$TT <- factor_scores[,2]
+
+alpha(believe_data[,c("CT1","CT3","CT4","CT5","CT6","CT8","CT9")])
+alpha(believe_data[,c("TT3","TT5","TT7")])
+alpha(believe_data[,c("CT1","CT3","CT4","CT5","CT6","CT8","CT9","TT3","TT5","TT7")])
+
+#write.xlsx(believe_data,file='believe_result.xlsx')
+```
+
+```{r major satisfaction}
+
+MS_data <- read.xlsx('preservice_teacher.xlsx')
+
+reverse_items <- c("MS4")
+MS_data[,reverse_items] <- 6- MS_data[,reverse_items]
+
+model <- '
+  MS =~ MS1 + MS2 + MS3 + MS4 + MS5'
+fit <- cfa (model,data = MS_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+MS_data$MS <- factor_scores[,1]
+
+alpha(MS_data[,c("MS1","MS2","MS3","MS4","MS5")])
+
+#write.xlsx(MS_data,file='MS_result.xlsx')
+
+```
+
+```{r SJT_PS}
+
+PS_data <- read.xlsx('preservice_teacher.xlsx')
+
+model <- '
+  F =~ c1 + c2 + c3 + c4 + c5'
+fit <- cfa(model,data = PS_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+factor_scores <- predict(fit)
+PS_data$original <- factor_scores[,1]
+
+omega(PS_data[,c("c1", "c2", "c3", "c4", "c5")]) 
+
+# top 6 items
+model <- '
+  F =~ adapted_r1_3 + new_r1_4 + new_r3_2 + + adapted_r1_6 + adapted_r1_2'
+
+fit <- cfa(model, data = PS_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+factor_scores <- predict(fit)
+PS_data$llm <- factor_scores[,1]
+
+omega(PS_data[,c("adapted_r1_3", "new_r1_4", "new_r3_2", "adapted_r1_6", "adapted_r1_2")])
+
+cor(PS_data$llm,PS_data$original) 
+#write.xlsx(PS_data,file='PS_result.xlsx')
+
+# item difficulty
+item_names <- c("c1", "c2", "c3", "c4", "c5","adapted_r1_3", "new_r1_4", "new_r3_2", "adapted_r1_6", "adapted_r1_2") 
+item_difficulty <- apply(PS_data[, item_names], 2, function(x) mean(x, na.rm = TRUE) / 2)
+item_difficulty <- round(item_difficulty,2)
+print(item_difficulty) 
+```
+
+```{r SJT_SO}
+
+SO_data <- read.xlsx('preservice_teacher.xlsx')
+
+model <- '
+  F =~ S_c1 + S_c2 + S_c4 + S_c5 + S_c6'
+fit <- cfa(model, data = SO_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+factor_scores <- predict(fit)
+SO_data$original <- factor_scores[,1]
+
+omega(SO_data[,c("S_c1", "S_c2", "S_c4", "S_c5", "S_c6")])
+
+# top 6 items
+model <- '
+  F =~ S_new_r2_6  + S_adapted_r1_6  +  S_adapted_r3_5 + S_adapted_r1_5 + S_adapted_r3_1'
+
+fit <- cfa(model, data = SO_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+factor_scores <- predict(fit)
+SO_data$llm <- factor_scores[,1]
+
+omega(SO_data[,c("S_new_r2_6", "S_adapted_r1_6", "S_adapted_r3_5", "S_adapted_r1_5", "S_adapted_r3_1")])
+
+item_names <- c("S_c1", "S_c2", "S_c4", "S_c5", "S_c6","S_new_r2_6", "S_adapted_r1_6", "S_adapted_r3_5", "S_adapted_r1_5", "S_adapted_r3_1") 
+
+item_difficulty <- apply(PS_data[, item_names], 2, function(x) mean(x, na.rm = TRUE) / 2)
+item_difficulty <- round(item_difficulty,2)
+print(item_difficulty) 
+
+cor(SO_data$llm,SO_data$original) 
+#write.xlsx(SO_data,file='SO_result.xlsx')
+
+```
+
+
+

@@ -1,0 +1,582 @@
+
+```{r packages}
+
+library(openxlsx)
+library(dplyr)
+library(lavaan)
+library(psych)
+library(tidyr)
+library(car)
+library(rstatix)
+library(ggplot2)
+library(gridExtra)
+
+```
+
+```{r work satisfaction}
+
+satisf_data <- read.xlsx('teacher_satisfaction.xlsx') 
+
+model <- '
+  WR =~ WR1 + WR2 + WR3 + WR4 + WR5 + WR6
+  LR =~ LR1 + LR2 + LR3 + LR4 + LR5 + LR6 + LR7
+  MR =~ MR1 + MR2 + MR3 + MR4
+  ST =~ ST1 + ST2 + ST3 + ST4 + ST5 + ST6
+  PO =~ PO1 + PO2 + PO3 + PO4
+  FI =~ FI1 + FI2 + FI3 + FI4'
+
+fit <- cfa(model, data = satisf_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+
+satisf_data$WR <- factor_scores[,1]
+satisf_data$LR <- factor_scores[,2]
+satisf_data$MR <- factor_scores[,3]
+satisf_data$ST <- factor_scores[,4]
+satisf_data$PO <- factor_scores[,5]
+satisf_data$FI <- factor_scores[,6]
+
+# internal consistency
+
+alpha(satisf_data[, c("WR1", "WR2", "WR3", "WR4", "WR5", "WR6")])
+alpha(satisf_data[,c("LR1","LR2","LR3","LR4","LR5","LR6","LR7")])
+alpha(satisf_data[,c("MR1","MR2","MR3","MR4")])
+alpha(satisf_data[,c("ST1","ST2","ST3","ST4","ST5","ST6")])
+alpha(satisf_data[,c("PO1","PO2","PO3","PO4")])
+alpha(satisf_data[,c("FI1","FI2","FI3","FI4")])
+alpha(satisf_data[,c("WR1", "WR2", "WR3", "WR4", "WR5", "WR6","LR1","LR2","LR3","LR4","LR5","LR6","LR7", "MR1","MR2","MR3","MR4","ST1","ST2","ST3","ST4","ST5","ST6",
+                     "PO1","PO2","PO3","PO4", "FI1","FI2","FI3","FI4")])
+
+#write.xlsx(satisf_data,file='satisf_result.xlsx')
+
+```
+
+```{r belief}
+
+belief_data <- read.xlsx('teacher_belief.xlsx') 
+
+model <- '
+  CT =~ CT1 + CT2 + CT3 + CT4 + CT5 + CT6 + CT7 + CT8 + CT9  
+  TT =~ TT1 + TT2 + TT3 + TT4 + TT5 + TT6 + TT7'
+
+fit <- cfa(model, data = belief_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+mi <- modificationIndices(fit)
+mi[mi$mi > 30, ]
+
+model <- '
+  CT =~ CT1 + CT2 + CT3 + CT4 + CT5 + CT6 + CT7 + CT8 + CT9  + TT3 + TT5
+  TT =~ TT1 + TT2 + TT4 + TT6 + TT7'
+fit <- cfa(model, data = belief_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+
+belief_data$CT <- factor_scores[,1]
+belief_data$TT <- factor_scores[,2]
+
+alpha(belief_data[,c("CT1","CT2","CT3","CT4","CT5","CT6","CT7","CT8","CT9","TT3","TT5")])
+alpha(belief_data[,c("TT1","TT2","TT4","TT6","TT7")])
+alpha(belief_data[,c("CT1","CT2","CT3","CT4","CT5","CT6","CT7","CT8","CT9","TT3","TT5",
+"TT1","TT2","TT4","TT6","TT7")])
+
+#write.xlsx(belief_data,file='belief_result.xlsx')
+
+```
+
+```{r big five}
+
+Big5data <- read.xlsx('teacher_big5.xlsx') 
+
+reverse_items <- c("N4", "C1", "A4", "A5", "A7", "E2", "E3")
+Big5data[, reverse_items] <- 7 - Big5data[, reverse_items]
+
+model <- '
+  O =~ O5 + O4 + O6
+  C =~ C6 + C7 + C5
+  E =~ E2 + E3 + E1
+  A =~ A2 + A3 + A1
+  N =~ N7 + N8 + N1'
+
+fit <- cfa(model, data = Big5data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+
+Big5data$O <- factor_scores[,1]
+Big5data$C <- factor_scores[,2]
+Big5data$E <- factor_scores[,3]
+Big5data$A <- factor_scores[,4]
+Big5data$N <- factor_scores[,5]
+
+alpha(Big5data[,c("O5","O4","O6")])
+alpha(Big5data[,c("C6","C7","C5")])
+alpha(Big5data[,c("E2","E3","E1")])
+alpha(Big5data[,c("A2","A3","A1")])
+alpha(Big5data[,c("N7","N8","N1")])
+alpha(Big5data[,c("O5","O4","O6","C6","C7","C5","E2","E3","E1","A2","A3","A1","N7","N8","N1")])
+
+#write.xlsx(Big5data,file='big5_result.xlsx')
+
+```
+
+```{r self-efficacy}
+
+efficacy_data <- read.xlsx('teacher_efficacy.xlsx')
+
+model <-'
+  CR =~ CR1 + CR2 + CR3 + CR4
+  ST =~ ST1 + ST2 + ST3 + ST4 + ST5 + ST6 + ST7 + ST8'
+
+fit <- cfa(model, data = efficacy_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+
+efficacy_data$CR <- factor_scores[,1]
+efficacy_data$ST <- factor_scores[,2]
+
+alpha(efficacy_data[,c("CR1","CR2","CR3","CR4")])
+alpha(efficacy_data[,c("ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8")])
+alpha(efficacy_data[,c("CR1","CR2","CR3","CR4",
+                       "ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8")])
+
+#write.xlsx(efficacy_data,file='efficacy_result.xlsx')
+
+```
+
+```{r professional identity}
+
+Prof_identity <- read.xlsx('teacher_identity.xlsx')
+
+model <-'
+  CV =~ CV1 + CV2 + CV3 + CV4 + CV5 + CV6
+  BT =~ BT1 + BT2 + BT3 + BT4 + BT5
+  JC =~ JC1 + JC2 + JC3
+  JB =~ JB1 + JB2 + JB3'
+
+fit <- cfa(model, data = Prof_identity)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+
+Prof_identity$CV <- factor_scores[,1]
+Prof_identity$BT <- factor_scores[,2]
+Prof_identity$JC <- factor_scores[,3]
+Prof_identity$JB <- factor_scores[,4]
+
+alpha(Prof_identity[,c("CV1","CV2","CV3","CV4","CV5","CV6")])
+alpha(Prof_identity[,c("BT1","BT2","BT3","BT4","BT5")])
+alpha(Prof_identity[,c("JC1","JC2","JC3")])
+alpha(Prof_identity[,c("JB1","JB2","JB3")])
+alpha(Prof_identity[,c("CV1","CV2","CV3","CV4","CV5","CV6","BT1","BT2","BT3","BT4","BT5", "JC1","JC2","JC3","JB1","JB2","JB3")])
+
+#write.xlsx(Prof_identity,file='identity_result.xlsx')
+
+```
+
+```{r burn out}
+
+Burnout_data <- read.xlsx('teacher_burnout.xlsx')
+
+model <- '
+  EE =~ EE1 + EE2 + EE3 + EE4 + EE5 + EE6 + EE8 + EE9
+  DP =~ DP1 + DP2 + DP3 + DP4
+  RPA =~ RPA1 + RPA2 + RPA3 + RPA4 + RPA5 + RPA6 + RPA7 + RPA8'
+
+fit <- cfa(model, data = Burnout_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+factor_scores <- predict(fit)
+Burnout_data$EE <- factor_scores[,1]
+Burnout_data$DP <- factor_scores[,2]
+Burnout_data$RPA <- factor_scores[,3]
+
+alpha(Burnout_data[,c("EE1","EE2","EE3","EE4","EE5","EE6","EE8","EE9")])
+alpha(Burnout_data[,c("DP1","DP2","DP3","DP4")])
+alpha(Burnout_data[,c("RPA1","RPA2","RPA3","RPA4","RPA5","RPA6","RPA7","RPA8")])
+
+reverse_items <- c("RPA1","RPA2","RPA3","RPA4","RPA5","RPA6","RPA7","RPA8")
+Burnout_data[, reverse_items] <- 6 - Burnout_data[, reverse_items]
+
+alpha(Burnout_data[,c("EE1","EE2","EE3","EE4","EE5","EE6","EE8","EE9",
+                    "DP1","DP2","DP3","DP4","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6","RPA7","RPA8")])
+
+#write.xlsx(Burnout_data,file='Burnout_result.xlsx')
+```
+
+```{r problem solving}
+
+problem_solving_data <- read.xlsx('teacher_problem.xlsx')
+
+reverse_items <- c("PS3", "PS10","AA4", "AA5", "AA6", "AA9", "AA11","AA12",
+                   "AA14","AA16")
+problem_solving_data[, reverse_items] <- 7 - problem_solving_data[, reverse_items]
+
+model <- '
+  PS =~ PS2 + PS3 + PS4 + PS6 + PS7 + PS8 + PS10 + PS11
+  AA =~ AA1 + AA2 + AA3 + AA8
+     + AA13 + AA15
+  SC =~ SC1 + SC2 + SC3 + SC4 + SC5'
+
+mi <- modificationIndices(fit)
+mi[mi$mi > 30, ]
+
+fit <- cfa(model, data = problem_solving_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+
+problem_solving_data$PS <- factor_scores[,1]
+problem_solving_data$AA <- factor_scores[,2]
+problem_solving_data$SC <- factor_scores[,3]
+
+
+alpha(problem_solving_data[, c("PS2", "PS3", "PS4", "PS6", "PS7", "PS8","PS10","PS11")])
+alpha(problem_solving_data[,c("AA1","AA2","AA3","AA8","AA13","AA15")])
+alpha(problem_solving_data[,c("SC1","SC2","SC3","SC4","SC5")])
+
+reverse_items <- c("PS2", "PS3", "PS4", "PS6", "PS7", "PS8","PS10","PS11")
+problem_solving_data[, reverse_items] <- 7 - problem_solving_data[, reverse_items]
+
+alpha(problem_solving_data[,c("PS2", "PS3", "PS4", "PS6", "PS7", "PS8","PS10","PS11",
+                              "AA1","AA2","AA3","AA8","AA13","AA15","SC1","SC2","SC3","SC4","SC5")])
+
+#write.xlsx(problem_solving_data,file='pro_solving_result.xlsx')
+
+```
+
+```{r SJT-PS}
+
+PS_data <- read.xlsx('SJT_PS.xlsx') 
+
+# original items
+
+model <- '
+  F =~ c1 + c2 + c3 + c4 + c5 + c6 '
+
+fit <- cfa(model, data = PS_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+PS_data$original <- factor_scores[,1]
+
+# LLM-generated top 6 items with highest loading
+
+model <- '
+  F =~ adapted_r1_6 + adapted_r1_5 + new_r2_1 + adapted_r1_3 + new_r1_3 + new_r1_4'
+
+fit <- cfa(model, data = PS_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+PS_data$llm <- factor_scores[,1]
+
+cor(PS_data$llm,PS_data$original) 
+
+write.xlsx(PS_data,file='PS_result.xlsx')
+
+#internal consistency
+
+omega(PS_data[,c("c1", "c2", "c3", "c4", "c5", "c6")]) 
+omega(PS_data[,c("adapted_r1_6","adapted_r1_5","new_r2_1","adapted_r1_3","new_r1_3","new_r1_4")])
+
+# item difficulty (pass rate)
+
+item_names <- c("c1", "c2", "c3", "c4", "c5", "c6", "adapted_r1_6","adapted_r1_5","new_r2_1","adapted_r1_3","new_r1_3","new_r1_4") 
+
+item_difficulty <- apply(PS_data[, item_names], 2, function(x) mean(x, na.rm = TRUE) / 2)
+
+item_difficulty <- round(item_difficulty,2)
+print(item_difficulty) 
+
+
+```
+
+```{r SJT-SO}
+
+SO_data <- read.xlsx('SJT_SO.xlsx') 
+
+model <- '
+  F =~ c1 + c2 + c3 + c4 + c5'
+
+fit <- cfa(model, data = SO_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+SO_data$original <- factor_scores[,1]
+
+# LLM-generated top 5 items with highest loading
+
+model <- '
+  F =~ adapted_r3_5 + new_r2_3 + adapted_r3_3 + adapted_r3_1 + adapted_r2_6'
+
+fit <- cfa(model, data = SO_data)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+factor_scores <- predict(fit)
+SO_data$llm <- factor_scores[,1] 
+
+cor(SO_data$llm,SO_data$original) 
+cor(SO_data$llm,PS_data$llm)
+
+#write.xlsx(SO_data,file='SO_result.xlsx')
+
+omega(SO_data[,c("c1", "c2", "c3", "c4", "c5")]) 
+omega(SO_data[,c("adapted_r3_5","new_r2_3","adapted_r3_3","adapted_r3_1","adapted_r2_6")]) 
+
+# item difficulty
+
+item_names <- c("c1", "c2", "c3", "c4", "c5", "adapted_r3_5","new_r2_3","adapted_r3_3","adapted_r3_1","adapted_r2_6") 
+
+item_difficulty <- apply(SO_data[, item_names], 2, function(x) mean(x, na.rm = TRUE) / 2)
+
+item_difficulty <- round(item_difficulty,2)
+print(item_difficulty) 
+
+```
+
+```{r known-group validity}
+
+data <- read.xlsx("cross_group_comparison.xlsx")
+
+#-----status-----
+
+status_PS_org <- data %>%
+  filter(!is.na(status)) %>%
+  group_by(status) %>%
+  summarise(mean_PS = mean(PS_original, na.rm = TRUE))
+
+status_labels <- c("2" = "Junior", "3" = "Intermediate", "4" = "Senior")
+
+green_palette <- c("#C5E8B7", "#71C562", "#2E8B57")
+
+p_status_PS_org <- ggplot(status_PS_org, aes(x = factor(status), y = mean_PS, fill = factor(status))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = status_labels) +
+  scale_fill_manual(values = green_palette) +
+  labs(
+    title = " ",
+    x = "Professional Title",
+    y = "Mean"
+  ) +
+  ylim(-0.085, 0.085) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+
+status_PS_llm <- data %>%
+  filter(!is.na(status)) %>%
+  group_by(status) %>%
+  summarise(mean_PS = mean(PS_llm, na.rm = TRUE))
+
+p_status_PS_llm <- ggplot(status_PS_llm, aes(x = factor(status), y = mean_PS, fill = factor(status))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = status_labels) +
+  scale_fill_manual(values = green_palette) +
+  labs(
+    title = " ",
+    x = "Professional Title",
+    y = "Mean"
+  ) +
+  ylim(-0.085, 0.085) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+
+status_SO_org <- data %>%
+  filter(!is.na(status)) %>%
+  group_by(status) %>%
+  summarise(mean_SO = mean(SO_original, na.rm = TRUE))
+
+p_status_SO_org <- ggplot(status_SO_org, aes(x = factor(status), y = mean_SO, fill = factor(status))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = status_labels) +
+  scale_fill_manual(values = green_palette) +
+  labs(
+    title = " ",
+    x = "Professional Title",
+    y = "Mean"
+  ) +
+  ylim(-0.085, 0.085) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),  
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+
+status_SO_llm <- data %>%
+  filter(!is.na(status)) %>%
+  group_by(status) %>%
+  summarise(mean_SO = mean(SO_llm, na.rm = TRUE))
+
+p_status_SO_llm <- ggplot(status_SO_llm, aes(x = factor(status), y = mean_SO, fill = factor(status))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = status_labels) +
+  scale_fill_manual(values = green_palette) +
+  labs(
+    title = " ",
+    x = "Professional Title",
+    y = "Mean"
+  ) +
+  ylim(-0.085, 0.085) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(),  
+    panel.grid.minor = element_blank(),  
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+#-----reward-------
+
+reward_PS_org <- data %>%
+  filter(!is.na(reward)) %>%
+  group_by(reward) %>%
+  summarise(mean_PS = mean(PS_original, na.rm = TRUE))
+
+reward_labels <- c("1"="None","2" = "School", "3" = "District", "4" = "Municipal")
+
+blue_palette <- c("#D6EAF8", "#85C1E9", "#3498DB", "#1F618D")
+
+p_reward_PS_org <- ggplot(reward_PS_org, aes(x = factor(reward), y = mean_PS, fill = factor(reward))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = reward_labels) +
+  scale_fill_manual(values = blue_palette) +
+  labs(
+    title = " ",
+    x = "Award Level",
+    y = "Mean"
+  ) +
+  ylim(-0.12, 0.12) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+reward_PS_llm <- data %>%
+  filter(!is.na(reward)) %>%
+  group_by(reward) %>%
+  summarise(mean_PS = mean(PS_llm, na.rm = TRUE))
+
+p_reward_PS_llm <- ggplot(reward_PS_llm, aes(x = factor(reward), y = mean_PS, fill = factor(reward))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = reward_labels) +
+  scale_fill_manual(values = blue_palette) +
+  labs(
+    title = " ",
+    x = "Award Level",
+    y = "Mean"
+  ) +
+  ylim(-0.12, 0.12) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+
+reward_SO_org <- data %>%
+  filter(!is.na(reward)) %>%
+  group_by(reward) %>%
+  summarise(mean_SO = mean(SO_original, na.rm = TRUE))
+
+p_reward_SO_org <- ggplot(reward_SO_org, aes(x = factor(reward), y = mean_SO, fill = factor(reward))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = reward_labels) +
+  scale_fill_manual(values = blue_palette) +
+  labs(
+    title = " ",
+    x = "Award Level",
+    y = "Mean"
+  ) +
+  ylim(-0.12, 0.12) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+reward_SO_llm <- data %>%
+  filter(!is.na(reward)) %>%
+  group_by(reward) %>%
+  summarise(mean_SO = mean(SO_llm, na.rm = TRUE))
+
+p_reward_SO_llm <- ggplot(reward_SO_llm, aes(x = factor(reward), y = mean_SO, fill = factor(reward))) +
+  geom_bar(stat = "identity", width = 1) +
+  scale_x_discrete(labels = reward_labels) +
+  scale_fill_manual(values = blue_palette) +
+  labs(
+    title = " ",
+    x = "Award Level",
+    y = "Mean"
+  ) +
+  ylim(-0.12, 0.12) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(color = "grey", fill = NA, linewidth = 0.5) 
+  )
+
+grid.arrange(p_status_PS_org,p_status_PS_llm,
+             p_reward_PS_org,p_reward_PS_llm,
+             p_status_SO_org,p_status_SO_llm,
+             p_reward_SO_org,p_reward_SO_llm,
+             ncol=4)
+
+
+#------ANOVA------
+
+data$status <- as.factor(data$status)
+
+levene_test <- leveneTest(PS_llm ~ status, data = data)
+print(levene_test)
+
+welch_result <- oneway.test(PS_llm ~ status, data = data, var.equal = FALSE)
+print(welch_result)
+
+# post hoc
+
+games_howell_result <- games_howell_test(data,PS_llm ~ status)
+print(games_howell_result)
+
+```
